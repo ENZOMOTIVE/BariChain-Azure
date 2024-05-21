@@ -5,6 +5,7 @@ const { BlobServiceClient, BlockBlobClient } = require('@azure/storage-blob');
 const cors = require('cors');
 const app = express();
 
+
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -162,8 +163,8 @@ const systemAddress = '0xe3F292F78B90127Ec3c90850c30388B13EfCFEbb'; //wallet add
 
 
 //Microsoft Azure Integration
-const blobServiceClient = BlobServiceClient.fromConnectionString('DefaultEndpointsProtocol=https;AccountName=blockchain01;AccountKey=i+BcRRJvxth/wk2h9SDKczuo5xja+h/eH+ALaJk+6eMSmEPKJX/hs+GA/D6VsiqYhJGrqbFQQ8Mr+AStujInHg==;EndpointSuffix=core.windows.net'); //Azure storage connection string
-const containerClient = blobServiceClient.getContainerClient('blockchain01'); //Container name
+const blobServiceClient = BlobServiceClient.fromConnectionString('BlobEndpoint=https://blockchain01.blob.core.windows.net/;QueueEndpoint=https://blockchain01.queue.core.windows.net/;FileEndpoint=https://blockchain01.file.core.windows.net/;TableEndpoint=https://blockchain01.table.core.windows.net/;SharedAccessSignature=sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-05-21T18:19:32Z&st=2024-05-21T10:19:32Z&spr=https,http&sig=VZP8r%2BZrpGVz6E2tncnxQc7t7Rvwk%2Fo1On1w5r71hmc%3D'); //Azure storage connection string
+const containerClient = blobServiceClient.getContainerClient('blockchain-container'); //Container name
 
 //Admin criteria
 let adminCriteria = {};
@@ -214,7 +215,7 @@ function validateData(userData) {
 
 
 // Start the server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000 ;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

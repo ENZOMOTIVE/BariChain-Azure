@@ -20,7 +20,7 @@ function App() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(userData)
-      });
+    });
       const data = await res.json();
       setResponse(data.validation);
     } catch (error) {
