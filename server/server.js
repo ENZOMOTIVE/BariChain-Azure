@@ -185,7 +185,6 @@ app.post('/admin-interface',(req, res) => {
     res.json({ message: 'Criteria saved succesfully'});
 });
 
-//User submits water quality data
 app.post('/user-interface', async (req, res) => {
     const userData = req.body;
     const { ph, temp, turbidity, walletAddress } = userData;
@@ -199,12 +198,15 @@ app.post('/user-interface', async (req, res) => {
     // Save JSON file to the blob storage
     const fileName = `result-${Date.now()}.json`;
     console.log("File name:", fileName);
-    
+
     const blockBlobClient = containerClient.getBlockBlobClient(fileName);
     console.log("Block blob client:", blockBlobClient);
 
     try {
-        const uploadResponse = await blockBlobClient.upload(JSON.stringify({ ...userData, result }), Buffer.byteLength(JSON.stringify({ ...userData, result })));
+        const uploadResponse = await blockBlobClient.upload(
+            JSON.stringify({ ...userData, result }),
+            Buffer.byteLength(JSON.stringify({ ...userData, result }))
+        );
         console.log("File uploaded successfully:", uploadResponse);
 
         // Get the file URL
@@ -220,19 +222,14 @@ app.post('/user-interface', async (req, res) => {
         const nonce = await web3.eth.getTransactionCount(systemAddress);
         console.log("Nonce:", nonce);
 
-		//const gasPriceBNB = 0.000001; // Set a very low gas price in BNB, you can adjust this
-		//const gasPriceWei = web3.utils.toWei(gasPriceBNB.toString(), 'ether'); // Convert BNB to Wei 
-
-		// Get the estimated gas limit
-		const gasLimit = await contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl).estimateGas({ from: systemAddress });
-		// Get the current gas price
-		const gasPrice = await web3.eth.getGasPrice();
+        const gasLimit = await contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl).estimateGas({ from: systemAddress });
+        const gasPrice = await web3.eth.getGasPrice();
         const txObject = {
-			nonce: web3.utils.toHex(nonce),
-			to: contractAddress,
-			gasLimit: web3.utils.toHex(gasLimit),
-			gasPrice: web3.utils.toHex(gasPrice),
-			data: txData
+            nonce: web3.utils.toHex(nonce),
+            to: contractAddress,
+            gasLimit: web3.utils.toHex(gasLimit),
+            gasPrice: web3.utils.toHex(gasPrice),
+            data: txData
         };
         console.log("Transaction object:", txObject);
 
@@ -242,10 +239,21 @@ app.post('/user-interface', async (req, res) => {
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
         console.log("Transaction sent, receipt:", receipt);
 
+        // Get the transaction hash
+        const transactionHash = receipt.transactionHash;
+
+        // Update the blob storage with the transaction hash
+        const updatedUploadResponse = await blockBlobClient.upload(
+            JSON.stringify({ ...userData, result, transactionHash }),
+            Buffer.byteLength(JSON.stringify({ ...userData, result, transactionHash })),
+            { overwrite: true } // Overwrite the previous file
+        );
+        console.log("File updated successfully with transaction hash:", updatedUploadResponse);
+
         res.json({
             validation: result,
             contractAddress: contractAddress,
-            transactionHash: receipt.transactionHash,
+            transactionHash: transactionHash,
             fileUrl: fileUrl
         });
     } catch (error) {
