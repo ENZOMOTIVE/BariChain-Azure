@@ -3,11 +3,13 @@ const bodyParser = require('body-parser');  // used to parse data in HTTP reques
 const {Web3} = require('web3');
 const { BlobServiceClient, BlockBlobClient } = require('@azure/storage-blob');
 const cors = require('cors');
+const morgan = require('morgan');
+
 const app = express();
 require('dotenv').config();  
 
 
-
+app.use(morgan('dev')); // Log requests to the console
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -170,6 +172,13 @@ const containerClient = blobServiceClient.getContainerClient('blockchain-contain
 
 //Admin criteria
 let adminCriteria = {};
+
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Internal Server Error' });
+});
 
 app.post('/admin-interface',(req, res) => {
     adminCriteria = req.body;
