@@ -220,12 +220,19 @@ app.post('/user-interface', async (req, res) => {
         const nonce = await web3.eth.getTransactionCount(systemAddress);
         console.log("Nonce:", nonce);
 
+		//const gasPriceBNB = 0.000001; // Set a very low gas price in BNB, you can adjust this
+		//const gasPriceWei = web3.utils.toWei(gasPriceBNB.toString(), 'ether'); // Convert BNB to Wei 
+
+		// Get the estimated gas limit
+		const gasLimit = await contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl).estimateGas({ from: systemAddress });
+		// Get the current gas price
+		const gasPrice = await web3.eth.getGasPrice();
         const txObject = {
-            nonce: web3.utils.toHex(nonce),
-            to: contractAddress,
-            gasLimit: web3.utils.toHex(300000),  // You can adjust this value
-            gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')),
-            data: txData
+			nonce: web3.utils.toHex(nonce),
+			to: contractAddress,
+			gasLimit: web3.utils.toHex(gasLimit),
+			gasPrice: web3.utils.toHex(gasPrice),
+			data: txData
         };
         console.log("Transaction object:", txObject);
 
