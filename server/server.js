@@ -190,34 +190,50 @@ app.post('/user-interface', async (req, res) => {
     const userData = req.body;
     const { ph, temp, turbidity, walletAddress } = userData;
 
+    console.log("Received user data:", userData);
+
     // Validation
     const result = validateData(userData);
+    console.log("Validation result:", result);
 
     // Save JSON file to the blob storage
     const fileName = `result-${Date.now()}.json`;
+    console.log("File name:", fileName);
+    
     const blockBlobClient = containerClient.getBlockBlobClient(fileName);
-    await blockBlobClient.upload(JSON.stringify({ ...userData, result }), Buffer.byteLength(JSON.stringify({ ...userData, result })));
-
-    // Get the file URL
-    const fileUrl = blockBlobClient.url;
-
-    // Prepare transaction data for MetaMask
-    const tx = contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl);
-    const txData = tx.encodeABI();
-
-    // Send transaction using the user's wallet address
-    const nonce = await web3.eth.getTransactionCount(systemAddress);
-    const txObject = {
-        nonce: web3.utils.toHex(nonce),
-        to: contractAddress,
-        gasLimit: web3.utils.toHex(300000),  // You can adjust this value
-        gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')),
-        data: txData
-    };
+    console.log("Block blob client:", blockBlobClient);
 
     try {
+        const uploadResponse = await blockBlobClient.upload(JSON.stringify({ ...userData, result }), Buffer.byteLength(JSON.stringify({ ...userData, result })));
+        console.log("File uploaded successfully:", uploadResponse);
+
+        // Get the file URL
+        const fileUrl = blockBlobClient.url;
+        console.log("File URL:", fileUrl);
+
+        // Prepare transaction data for MetaMask
+        const tx = contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl);
+        const txData = tx.encodeABI();
+        console.log("Transaction data prepared:", txData);
+
+        // Send transaction using the user's wallet address
+        const nonce = await web3.eth.getTransactionCount(systemAddress);
+        console.log("Nonce:", nonce);
+
+        const txObject = {
+            nonce: web3.utils.toHex(nonce),
+            to: contractAddress,
+            gasLimit: web3.utils.toHex(300000),  // You can adjust this value
+            gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')),
+            data: txData
+        };
+        console.log("Transaction object:", txObject);
+
         const signedTx = await web3.eth.accounts.signTransaction(txObject, process.env.PRIVATE_KEY);
+        console.log("Transaction signed:", signedTx);
+
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        console.log("Transaction sent, receipt:", receipt);
 
         res.json({
             validation: result,
@@ -226,6 +242,7 @@ app.post('/user-interface', async (req, res) => {
             fileUrl: fileUrl
         });
     } catch (error) {
+        console.error("Error:", error);
         res.status(500).json({ error: 'Transaction failed', details: error.message });
     }
 });
