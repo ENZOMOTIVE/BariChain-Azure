@@ -4,6 +4,8 @@ const {Web3} = require('web3');
 const { BlobServiceClient, BlockBlobClient } = require('@azure/storage-blob');
 const cors = require('cors');
 const app = express();
+require('dotenv').config();  
+
 
 
 app.use(bodyParser.json());
@@ -30,34 +32,6 @@ const contractABI= [
 		],
 		"name": "MetadataStored",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "pH",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "temperature",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "turbidity",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "fileUrl",
-				"type": "string"
-			}
-		],
-		"name": "storeFileMetadata",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"inputs": [
@@ -120,6 +94,34 @@ const contractABI= [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "pH",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "temperature",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "turbidity",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "fileUrl",
+				"type": "string"
+			}
+		],
+		"name": "storeFileMetadata",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "",
 				"type": "address"
@@ -157,13 +159,13 @@ const contractABI= [
 		"type": "function"
 	}
 ];
-const contractAddress = '0x3ded9addbf7c46db95bd9faa339d0595c17557ad'; //contract deply address
+const contractAddress = '0x93365aa2fe482860073619e00a1da6ed4a2b0b17'; //contract deply address
 const contract = new web3.eth.Contract(contractABI,contractAddress);
 const systemAddress = '0xe3F292F78B90127Ec3c90850c30388B13EfCFEbb'; //wallet address
 
 
 //Microsoft Azure Integration
-const blobServiceClient = BlobServiceClient.fromConnectionString('BlobEndpoint=https://blockchain01.blob.core.windows.net/;QueueEndpoint=https://blockchain01.queue.core.windows.net/;FileEndpoint=https://blockchain01.file.core.windows.net/;TableEndpoint=https://blockchain01.table.core.windows.net/;SharedAccessSignature=sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-05-21T18:19:32Z&st=2024-05-21T10:19:32Z&spr=https,http&sig=VZP8r%2BZrpGVz6E2tncnxQc7t7Rvwk%2Fo1On1w5r71hmc%3D'); //Azure storage connection string
+const blobServiceClient = BlobServiceClient.fromConnectionString('DefaultEndpointsProtocol=https;AccountName=blockchain01;AccountKey=i+BcRRJvxth/wk2h9SDKczuo5xja+h/eH+ALaJk+6eMSmEPKJX/hs+GA/D6VsiqYhJGrqbFQQ8Mr+AStujInHg==;EndpointSuffix=core.windows.net'); //Azure storage connection string
 const containerClient = blobServiceClient.getContainerClient('blockchain-container'); //Container name
 
 //Admin criteria
@@ -174,34 +176,49 @@ app.post('/admin-interface',(req, res) => {
     res.json({ message: 'Criteria saved succesfully'});
 });
 
-//User submits water qualit data
-app.post('/user-interface',async (req, res) => {
+//User submits water quality data
+app.post('/user-interface', async (req, res) => {
     const userData = req.body;
+    const { ph, temp, turbidity, walletAddress } = userData;
 
-    //Validation
+    // Validation
     const result = validateData(userData);
 
-    //Save Json file to the blob storage
-    const fileName = 'result-${Date.now()}.json'; //The file name is stored as the Date 
+    // Save JSON file to the blob storage
+    const fileName = `result-${Date.now()}.json`;
     const blockBlobClient = containerClient.getBlockBlobClient(fileName);
-    await blockBlobClient.upload(JSON.stringify(userData), Buffer.byteLength(JSON.stringify(userData)));
-    
-    //get the file URL
+    await blockBlobClient.upload(JSON.stringify({ ...userData, result }), Buffer.byteLength(JSON.stringify({ ...userData, result })));
+
+    // Get the file URL
     const fileUrl = blockBlobClient.url;
 
-    //prepare trasaction data for metamask
-    const tx = contract.methods.storeFileMetadata(userData.ph, userData.temp, userData.turbidity, fileUrl);
+    // Prepare transaction data for MetaMask
+    const tx = contract.methods.storeFileMetadata(ph, temp, turbidity, fileUrl);
     const txData = tx.encodeABI();
 
-    res.json({
-        validation: result,
-        contractAddress: contractAddress,
-        txData: txData,
-        fileUrl: fileUrl
-    });
+    // Send transaction using the user's wallet address
+    const nonce = await web3.eth.getTransactionCount(systemAddress);
+    const txObject = {
+        nonce: web3.utils.toHex(nonce),
+        to: contractAddress,
+        gasLimit: web3.utils.toHex(300000),  // You can adjust this value
+        gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')),
+        data: txData
+    };
 
-    //Add metadata to the blockchain
-    await contract.methods.storeFileMetadata(userData.ph, userData.temp, userData.turbidity, fileUrl).send({ from: systemAddress});
+    try {
+        const signedTx = await web3.eth.accounts.signTransaction(txObject, process.env.PRIVATE_KEY);
+        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+        res.json({
+            validation: result,
+            contractAddress: contractAddress,
+            transactionHash: receipt.transactionHash,
+            fileUrl: fileUrl
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Transaction failed', details: error.message });
+    }
 });
 
 function validateData(userData) {

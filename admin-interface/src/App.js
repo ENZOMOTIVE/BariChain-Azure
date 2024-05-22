@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function App() {
+function AdminInterface() {
   const [adminCriteria, setAdminCriteria] = useState({ ph: '', temp: '', turbidity: '' });
 
   const handleChange = (e) => {
@@ -52,4 +52,4 @@ function App() {
   );
 }
 
-export default App;
+export default AdminInterface;

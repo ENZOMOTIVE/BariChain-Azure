@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import {Web3} from 'web3';
 
-function App() {
+function UserInterface() {
   const [userData, setUserData] = useState({ ph: '', temp: '', turbidity: '' });
   const [response, setResponse] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
 
   const handleChange = (e) => {
     setUserData({
@@ -11,16 +13,31 @@ function App() {
     });
   };
 
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      const web3 = new Web3(window.ethereum);
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setWalletAddress(accounts[0]);
+        console.log('Connected to wallet:', accounts[0]);
+      } catch (error) {
+        console.error('User rejected the request.');
+      }
+    } else {
+      console.error('MetaMask is not installed.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:3000/user-interface', {
+      const res = await fetch('http://localhost:3002/user-interface', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(userData)
-    });
+        body: JSON.stringify({ ...userData, walletAddress })
+      });
       const data = await res.json();
       setResponse(data.validation);
     } catch (error) {
@@ -31,6 +48,8 @@ function App() {
   return (
     <div className="App">
       <h1>User Interface</h1>
+      <button onClick={connectWallet}>Connect Wallet</button>
+      {walletAddress && <p>Connected: {walletAddress}</p>}
       <form onSubmit={handleSubmit}>
         <label>
           pH:
@@ -54,4 +73,4 @@ function App() {
   );
 }
 
-export default App;
+export default UserInterface;
