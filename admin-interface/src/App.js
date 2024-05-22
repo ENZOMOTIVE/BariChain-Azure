@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import './App.css';
 function AdminInterface() {
   const [adminCriteria, setAdminCriteria] = useState({ ph: '', temp: '', turbidity: '' });
 
