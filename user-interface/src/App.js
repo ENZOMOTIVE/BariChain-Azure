@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 //import Web3 from 'web3';
+import './App.css';
 
 function UserInterface() {
   const [userData, setUserData] = useState({ ph: '', temp: '', turbidity: '' });

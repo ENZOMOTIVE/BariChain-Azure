@@ -1,3 +1,5 @@
+/* UserInterface.css */
+/* Existing styles */
 .App {
   text-align: center;
 }
@@ -22,6 +24,7 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  margin-bottom: 20px; /* Add margin at the bottom of the header */
 }
 
 .App-link {
@@ -35,4 +38,29 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* New styles for form */
+form {
+  margin-top: 20px; /* Add margin at the top of the form */
+}
+
+label {
+  margin-bottom: 10px; /* Add margin at the bottom of each label */
+  display: block; /* Ensure each label is on a new line */
+}
+
+input {
+  margin-bottom: 10px; /* Add margin at the bottom of each input */
+  padding: 8px; /* Add padding to the input fields */
+  width: 200px; /* Set the width of the input fields */
+  box-sizing: border-box; /* Include padding and border in the element's total width */
+}
+
+button {
+  margin-top: 10px; /* Add margin at the top of the button */
+}
+
+p {
+  margin-top: 20px; /* Add margin at the top of the paragraph */
 }
