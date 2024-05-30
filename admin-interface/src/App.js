@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+
 function AdminInterface() {
   const [adminCriteria, setAdminCriteria] = useState({ ph: '', temp: '', turbidity: '' });
 
@@ -29,23 +30,22 @@ function AdminInterface() {
 
   return (
     <div className="App">
-      <h1>Admin Interface</h1>
-      <form onSubmit={handleSubmit}>
+      <header className="App-header">
+        <h1>Admin Interface</h1>
+      </header>
+      <form onSubmit={handleSubmit} className="admin-form">
         <label>
           pH:
           <input type="number" name="ph" value={adminCriteria.ph} onChange={handleChange} />
         </label>
-        <br />
         <label>
           Temperature:
           <input type="number" name="temp" value={adminCriteria.temp} onChange={handleChange} />
         </label>
-        <br />
         <label>
           Turbidity:
           <input type="text" name="turbidity" value={adminCriteria.turbidity} onChange={handleChange} />
         </label>
-        <br />
         <button type="submit">Submit</button>
       </form>
     </div>

@@ -167,7 +167,7 @@ const systemAddress = '0xe3F292F78B90127Ec3c90850c30388B13EfCFEbb'; //wallet add
 
 
 //Microsoft Azure Integration
-const blobServiceClient = BlobServiceClient.fromConnectionString('DefaultEndpointsProtocol=https;AccountName=blockchain01;AccountKey=i+BcRRJvxth/wk2h9SDKczuo5xja+h/eH+ALaJk+6eMSmEPKJX/hs+GA/D6VsiqYhJGrqbFQQ8Mr+AStujInHg==;EndpointSuffix=core.windows.net'); //Azure storage connection string
+const blobServiceClient = BlobServiceClient.fromConnectionString('DefaultEndpointsProtocol=https;AccountName=blockchain01;AccountKey=GFtsOSVocG1rfAM8FvbffultbP9BI1hYyGI0FuG4sI+tge2olDUlYVrfIpOKK0lyTOJb2J7J5h5n+ASt2N10JQ==;EndpointSuffix=core.windows.net'); //Azure storage connection string
 const containerClient = blobServiceClient.getContainerClient('blockchain-container'); //Container name
 
 //Admin criteria
@@ -241,6 +241,7 @@ app.post('/user-interface', async (req, res) => {
 
         // Get the transaction hash
         const transactionHash = receipt.transactionHash;
+		console.log(receipt.transactionHash);
 
         // Update the blob storage with the transaction hash
         const updatedUploadResponse = await blockBlobClient.upload(
